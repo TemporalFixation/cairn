@@ -19,10 +19,26 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const data = await req.json()
-  if (data.status === 'Resolved' || data.status === 'Closed') {
-    data.resolvedAt = new Date()
+  const body = await req.json()
+
+  // Coerce empty string to null for nullable FK
+  const assignedToId = body.assignedToId === '' ? null : (body.assignedToId ?? undefined)
+
+  // Only allow client-updatable fields (strip Prisma-managed fields)
+  const updateData: any = {}
+  if (body.issueType !== undefined) updateData.issueType = body.issueType
+  if (body.issueDescription !== undefined) updateData.issueDescription = body.issueDescription
+  if (body.status !== undefined) updateData.status = body.status
+  if (body.partsUsed !== undefined) updateData.partsUsed = body.partsUsed
+  if (body.repairCost !== undefined) updateData.repairCost = body.repairCost ?? null
+  if (body.timeSpentMinutes !== undefined) updateData.timeSpentMinutes = body.timeSpentMinutes ?? null
+  if (body.csNumber !== undefined) updateData.csNumber = body.csNumber || null
+  if (assignedToId !== undefined) updateData.assignedToId = assignedToId
+
+  if (body.status === 'Resolved' || body.status === 'Closed') {
+    updateData.resolvedAt = new Date()
   }
-  const ticket = await prisma.repairTicket.update({ where: { id: params.id }, data, include })
+
+  const ticket = await prisma.repairTicket.update({ where: { id: params.id }, data: updateData, include })
   return NextResponse.json({ ticket })
 }

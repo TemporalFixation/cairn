@@ -32,8 +32,9 @@ export async function POST(req: NextRequest) {
   if (!assetId || !issueType || !issueDescription) {
     return NextResponse.json({ error: 'assetId, issueType, issueDescription required' }, { status: 400 })
   }
+  const safeAssignedToId = assignedToId === '' ? null : (assignedToId ?? null)
   const ticket = await prisma.repairTicket.create({
-    data: { assetId, issueType, issueDescription, submittedById: session.user.id, assignedToId, partsUsed, repairCost, timeSpentMinutes, csNumber },
+    data: { assetId, issueType, issueDescription, submittedById: session.user.id, assignedToId: safeAssignedToId, partsUsed, repairCost, timeSpentMinutes, csNumber },
     include,
   })
   return NextResponse.json({ ticket }, { status: 201 })
