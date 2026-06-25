@@ -16,6 +16,8 @@ export function BulkTransferModal({ assetIds, open, onClose, onDone }: Props) {
   const [loading, setLoading] = useState(false)
 
   async function handleConfirm() {
+    if (mode === 'room' && !roomId) return
+    if (mode === 'person' && !person) return
     setLoading(true)
     await fetch('/api/assets/bulk-transfer', {
       method: 'POST',
@@ -44,7 +46,7 @@ export function BulkTransferModal({ assetIds, open, onClose, onDone }: Props) {
         )}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleConfirm} disabled={loading}>
+          <Button onClick={handleConfirm} disabled={loading || (mode === 'room' ? !roomId : !person)}>
             {loading ? 'Transferring...' : 'Confirm'}
           </Button>
         </DialogFooter>

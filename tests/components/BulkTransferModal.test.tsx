@@ -3,6 +3,18 @@ import { BulkTransferModal } from '@/components/assets/BulkTransferModal'
 
 global.fetch = jest.fn()
 
+jest.mock('@/components/shared/BuildingRoomSelect', () => ({
+  BuildingRoomSelect: ({ onBuildingChange, onRoomChange }: any) => {
+    return (
+      <div>
+        <button onClick={() => { onBuildingChange('MHS'); onRoomChange('r1') }}>
+          Select Room
+        </button>
+      </div>
+    )
+  }
+}))
+
 test('submits bulk transfer with room', async () => {
   ;(fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({ updated: 2 }) })
   const onDone = jest.fn()
@@ -14,9 +26,11 @@ test('submits bulk transfer with room', async () => {
       onDone={onDone}
     />
   )
-  // Select room tab and fill room id (simplified — actual UI uses dropdowns)
+  // Select room tab
   fireEvent.click(screen.getByText('Transfer to Room'))
-  // In a real test we'd fill the selects; verify the fetch call shape
+  // Set building and room using mocked BuildingRoomSelect
+  fireEvent.click(screen.getByText('Select Room'))
+  // Now click Confirm with room selected
   fireEvent.click(screen.getByRole('button', { name: /confirm/i }))
   await waitFor(() => expect(fetch).toHaveBeenCalledWith(
     '/api/assets/bulk-transfer',
