@@ -34,13 +34,13 @@ export default function TicketsPage() {
         <Link href="/tickets/new"><Button>New Ticket</Button></Link>
       </div>
       <div className="flex gap-3">
-        <Select value={status} onValueChange={setStatus}>
+        <Select value={status} onValueChange={v => setStatus(v ?? '')}>
           <SelectTrigger className="w-36"><SelectValue placeholder="All statuses" /></SelectTrigger>
           <SelectContent>
             {STATUSES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={building} onValueChange={setBuilding}>
+        <Select value={building} onValueChange={v => setBuilding(v ?? '')}>
           <SelectTrigger className="w-32"><SelectValue placeholder="All buildings" /></SelectTrigger>
           <SelectContent>
             {BUILDINGS.map(b => <SelectItem key={b} value={b}>{b || 'All'}</SelectItem>)}

@@ -87,7 +87,7 @@ export function AssetTable({ assets, onRefresh }: Props) {
         </TableBody>
       </Table>
       <BulkTransferModal
-        assetIds={[...selected]}
+        assetIds={Array.from(selected)}
         open={showTransfer}
         onClose={() => setShowTransfer(false)}
         onDone={() => { setSelected(new Set()); onRefresh() }}

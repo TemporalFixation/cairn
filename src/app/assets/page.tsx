@@ -44,13 +44,13 @@ export default function AssetsPage() {
           onChange={e => setQ(e.target.value)}
           className="max-w-xs"
         />
-        <Select value={building} onValueChange={setBuilding}>
+        <Select value={building} onValueChange={v => setBuilding(v ?? '')}>
           <SelectTrigger className="w-32"><SelectValue placeholder="Building" /></SelectTrigger>
           <SelectContent>
             {BUILDINGS.map(b => <SelectItem key={b || '_all'} value={b}>{b || 'All'}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={condition} onValueChange={setCondition}>
+        <Select value={condition} onValueChange={v => setCondition(v ?? '')}>
           <SelectTrigger className="w-32"><SelectValue placeholder="Condition" /></SelectTrigger>
           <SelectContent>
             {CONDITIONS.map(c => <SelectItem key={c || '_all'} value={c}>{c || 'All'}</SelectItem>)}

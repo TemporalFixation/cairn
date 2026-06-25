@@ -58,7 +58,7 @@ export function AssetForm({ asset, onSave }: Props) {
       </div>
       <div className="space-y-1">
         <Label>Condition</Label>
-        <Select value={form.condition} onValueChange={set('condition')}>
+        <Select value={form.condition} onValueChange={v => set('condition')(v ?? 'Good')}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
             {['New', 'Good', 'Fair', 'Poor'].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
