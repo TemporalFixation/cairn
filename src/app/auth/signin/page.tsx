@@ -1,9 +1,10 @@
 'use client'
+import { Suspense } from 'react'
 import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { useSearchParams } from 'next/navigation'
 
-export default function SignInPage() {
+function SignInContent() {
   const params = useSearchParams()
   const error = params.get('error')
   return (
@@ -18,5 +19,13 @@ export default function SignInPage() {
         </Button>
       </div>
     </div>
+  )
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p>Loading...</p></div>}>
+      <SignInContent />
+    </Suspense>
   )
 }
