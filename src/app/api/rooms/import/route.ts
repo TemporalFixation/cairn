@@ -9,6 +9,7 @@ type RoomRow = { building: string; room_name: string; responsible_person_email?:
 export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (session.user.role !== 'Admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const form = await req.formData()
   const file = form.get('file') as File | null

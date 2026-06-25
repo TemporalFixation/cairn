@@ -15,8 +15,13 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const data = await req.json()
-  const asset = await prisma.asset.update({ where: { id: params.id }, data })
+  const body = await req.json()
+  const updateData: any = {}
+  const allowedFields = ['assetTag', 'serialNumber', 'model', 'manufacturer', 'condition', 'building', 'roomId', 'assignedToPerson', 'purchaseDate', 'purchasePrice', 'warrantyExpiration', 'fundingSource', 'notes']
+  for (const field of allowedFields) {
+    if (field in body) updateData[field] = body[field] ?? null
+  }
+  const asset = await prisma.asset.update({ where: { id: params.id }, data: updateData })
   return NextResponse.json({ asset })
 }
 

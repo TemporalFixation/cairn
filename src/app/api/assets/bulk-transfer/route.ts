@@ -9,6 +9,7 @@ export async function POST(req: NextRequest) {
   const { assetIds, roomId, person } = await req.json()
   if (!assetIds?.length) return NextResponse.json({ error: 'No assets specified' }, { status: 400 })
   if (!roomId && !person) return NextResponse.json({ error: 'Specify roomId or person' }, { status: 400 })
+  if (roomId && person) return NextResponse.json({ error: 'Specify roomId or person, not both' }, { status: 400 })
 
   const data: any = {}
   if (roomId) { data.roomId = roomId; data.assignedToPerson = null }

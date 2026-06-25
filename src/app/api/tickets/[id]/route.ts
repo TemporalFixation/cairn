@@ -36,7 +36,14 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   if (assignedToId !== undefined) updateData.assignedToId = assignedToId
 
   if (body.status === 'Resolved' || body.status === 'Closed') {
-    updateData.resolvedAt = new Date()
+    // First fetch current ticket to check if resolvedAt is already set
+    const existing = await prisma.repairTicket.findUnique({
+      where: { id: params.id },
+      select: { resolvedAt: true }
+    })
+    if (!existing?.resolvedAt) {
+      updateData.resolvedAt = new Date()
+    }
   }
 
   const ticket = await prisma.repairTicket.update({ where: { id: params.id }, data: updateData, include })
