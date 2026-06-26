@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Building {
+  LPQ
+  MHS
+  BG
+  CC
+}
+
+enum Condition {
+  New
+  Good
+  Fair
+  Poor
+}
+
+enum TicketStatus {
+  Open
+  InProgress
+  WaitingForParts
+  Resolved
+  Closed
+}
+
+enum UserRole {
+  Admin
+  Technician
+}
+
+enum UserType {
+  Staff
+  Student
+}
+
+enum SystemRole {
+  User
+  SuperUser
+  Admin
+}
+
+model ITUser {
+  id              String         @id @default(cuid())
+  name            String
+  email           String         @unique
+  googleId        String         @unique
+  role            UserRole       @default(Technician)
+  createdAt       DateTime       @default(now())
+  submittedTickets RepairTicket[] @relation("SubmittedBy")
+  assignedTickets  RepairTicket[] @relation("AssignedTo")
+  accounts        Account[]
+  sessions        Session[]
+}
+
+model LocalUser {
+  id          String     @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String?    @unique
+  idNumber    String?    @unique
+  userType    UserType   @default(Staff)
+  role        SystemRole @default(User)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model Room {
+  id                String   @id @default(cuid())
+  name              String
+  building          Building
+  responsiblePerson Json?    // { name, email, ou }
+  assets            Asset[]
+  createdAt         DateTime @default(now())
+
+  @@unique([name, building])
+}
+
+model Asset {
+  id                  String        @id @default(cuid())
+  assetTag            String        @unique
+  serialNumber        String        @unique
+  model               String
+  manufacturer        String
+  purchaseDate        DateTime?
+  purchasePrice       Decimal?      @db.Decimal(10, 2)
+  warrantyExpiration  DateTime?
+  fundingSource       String?
+  condition           Condition     @default(Good)
+  notes               String?
+  assignedToPerson    Json?         // { name, email, id }
+  secondaryTags       String[]
+  providedAccessories String[]
+  checkedOutAt        DateTime?
+  building            Building
+  roomId              String?
+  room                Room?         @relation(fields: [roomId], references: [id])
+  repairTickets       RepairTicket[]
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+}
+
+model RepairTicket {
+  id               String       @id @default(cuid())
+  assetId          String
+  asset            Asset        @relation(fields: [assetId], references: [id])
+  issueType        String
+  issueDescription String
+  status           TicketStatus @default(Open)
+  submittedById    String
+  submittedBy      ITUser       @relation("SubmittedBy", fields: [submittedById], references: [id])
+  assignedToId     String?
+  assignedTo       ITUser?      @relation("AssignedTo", fields: [assignedToId], references: [id])
+  partsUsed        String?
+  repairCost       Decimal?     @db.Decimal(10, 2)
+  timeSpentMinutes Int?
+  csNumber         String?
+  photos           String[]
+  ticketParts      TicketPart[]
+  createdAt        DateTime     @default(now())
+  resolvedAt       DateTime?
+}
+
+model LookupValue {
+  id          String   @id @default(cuid())
+  category    String
+  value       String
+  parentValue String   @default("")
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@unique([category, value, parentValue])
+  @@index([category, parentValue])
+}
+
+model Part {
+  id                 String       @id @default(cuid())
+  name               String
+  partNumber         String?
+  compatManufacturer String?
+  compatModel        String?
+  quantityOnHand     Int          @default(0)
+  lowStockThreshold  Int          @default(2)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  ticketParts        TicketPart[]
+}
+
+model TicketPart {
+  id        String       @id @default(cuid())
+  ticketId  String
+  ticket    RepairTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  partId    String
+  part      Part         @relation(fields: [partId], references: [id])
+  quantity  Int          @default(1)
+  createdAt DateTime     @default(now())
+}
+
+// Auth.js required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              ITUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         ITUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  @@unique([identifier, token])
+}
