@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { Building, Condition } from '@prisma/client'
 
 const include = { room: true, repairTickets: { orderBy: { createdAt: 'desc' as const }, take: 5 } }
+const notDeleted = { deletedAt: null }
 
 export async function GET(req: NextRequest) {
   const session = await auth()
@@ -14,7 +15,22 @@ export async function GET(req: NextRequest) {
   const condition = searchParams.get('condition') as Condition | null
   const q = searchParams.get('q')
 
-  const where: any = {}
+  const assetTag = searchParams.get('assetTag')
+  if (assetTag) {
+    let asset = await prisma.asset.findFirst({ where: { assetTag, ...notDeleted }, include })
+    if (!asset) {
+      asset = await prisma.asset.findFirst({ where: { secondaryTags: { has: assetTag }, ...notDeleted }, include }) ?? null
+    }
+    return NextResponse.json({ asset: asset ?? null })
+  }
+
+  const serialNumber = searchParams.get('serialNumber')
+  if (serialNumber) {
+    const asset = await prisma.asset.findFirst({ where: { serialNumber, ...notDeleted }, include })
+    return NextResponse.json({ asset: asset ?? null })
+  }
+
+  const where: any = { ...notDeleted }
   if (building) where.building = building
   if (condition) where.condition = condition
   if (q) where.OR = [
@@ -33,12 +49,43 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const data = await req.json()
-  const { serialNumber, assetTag, model, manufacturer, building, condition, ...rest } = data
+  const { serialNumber, assetTag, model, manufacturer, building, condition } = data
   if (!serialNumber || !assetTag || !model || !manufacturer || !building) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
+
+  const toDate = (v: string | null | undefined) => v ? new Date(v) : null
+  const toFloat = (v: string | null | undefined) => v && v !== '' ? parseFloat(v) : null
+  const toStr = (v: string | null | undefined) => v && v !== '' ? v : null
+
   const asset = await prisma.asset.create({
-    data: { serialNumber, assetTag, model, manufacturer, building, condition: condition ?? 'Good', ...rest },
+    data: {
+      serialNumber,
+      assetTag,
+      model,
+      manufacturer,
+      building,
+      condition: condition ?? 'Good',
+      roomId: toStr(data.roomId),
+      assignedToPerson: data.assignedToPerson ?? null,
+      purchaseDate: toDate(data.purchaseDate),
+      purchasePrice: toFloat(data.purchasePrice),
+      warrantyExpiration: toDate(data.warrantyExpiration),
+      fundingSource: toStr(data.fundingSource),
+      notes: toStr(data.notes),
+      providedAccessories: data.providedAccessories ?? [],
+    },
   })
+
+  const performedBy = session.user?.name ?? session.user?.email ?? 'Unknown'
+  await prisma.assetEvent.create({
+    data: {
+      assetId: asset.id,
+      eventType: 'Enrolled',
+      accessories: data.providedAccessories ?? [],
+      performedBy,
+    },
+  })
+
   return NextResponse.json({ asset }, { status: 201 })
 }

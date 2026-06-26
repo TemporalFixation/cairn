@@ -28,13 +28,26 @@ export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { assetId, issueType, issueDescription, assignedToId, partsUsed, repairCost, timeSpentMinutes, csNumber } = await req.json()
+  const body = await req.json()
+  const { assetId, issueType, issueDescription } = body
   if (!assetId || !issueType || !issueDescription) {
     return NextResponse.json({ error: 'assetId, issueType, issueDescription required' }, { status: 400 })
   }
-  const safeAssignedToId = assignedToId === '' ? null : (assignedToId ?? null)
+  const toStr = (v: string | null | undefined) => v && v !== '' ? v : null
+  const toFloat = (v: any) => v !== '' && v != null ? parseFloat(v) : null
+  const toInt = (v: any) => v !== '' && v != null ? parseInt(v) : null
   const ticket = await prisma.repairTicket.create({
-    data: { assetId, issueType, issueDescription, submittedById: session.user.id, assignedToId: safeAssignedToId, partsUsed, repairCost, timeSpentMinutes, csNumber },
+    data: {
+      assetId,
+      issueType,
+      issueDescription,
+      submittedById: session.user.id,
+      assignedToId: toStr(body.assignedToId),
+      partsUsed: toStr(body.partsUsed),
+      repairCost: toFloat(body.repairCost),
+      timeSpentMinutes: toInt(body.timeSpentMinutes),
+      csNumber: toStr(body.csNumber),
+    },
     include,
   })
   return NextResponse.json({ ticket }, { status: 201 })

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Navy background -->
+  <rect width="32" height="32" rx="6" fill="#1B3358"/>
+  <!-- Bottom stone (widest) -->
+  <rect x="2" y="23" width="28" height="6" rx="3" fill="white"/>
+  <!-- Second stone -->
+  <rect x="5.5" y="16" width="21" height="6" rx="3" fill="white" fill-opacity="0.9"/>
+  <!-- Third stone -->
+  <rect x="9" y="9" width="14" height="6" rx="3" fill="white" fill-opacity="0.8"/>
+  <!-- Top stone (gold) -->
+  <rect x="12.5" y="3" width="7" height="5.5" rx="2.75" fill="#CD9A3B"/>
+</svg>

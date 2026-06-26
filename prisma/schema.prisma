@@ -23,6 +23,7 @@ enum Condition {
 enum TicketStatus {
   Open
   InProgress
+  WaitingForParts
   Resolved
   Closed
 }
@@ -30,6 +31,17 @@ enum TicketStatus {
 enum UserRole {
   Admin
   Technician
+}
+
+enum UserType {
+  Staff
+  Student
+}
+
+enum SystemRole {
+  User
+  SuperUser
+  Admin
 }
 
 model ITUser {
@@ -45,6 +57,26 @@ model ITUser {
   sessions        Session[]
 }
 
+model LocalUser {
+  id                    String     @id @default(cuid())
+  firstName             String
+  lastName              String
+  email                 String?    @unique
+  idNumber              String?    @unique
+  userType              UserType   @default(Staff)
+  role                  SystemRole @default(User)
+  passwordHash          String?
+  passwordChangeRequired Boolean   @default(false)
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+}
+
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
 model Room {
   id                String   @id @default(cuid())
   name              String
@@ -57,24 +89,46 @@ model Room {
 }
 
 model Asset {
-  id                 String        @id @default(cuid())
-  assetTag           String        @unique
-  serialNumber       String        @unique
-  model              String
-  manufacturer       String
-  purchaseDate       DateTime?
-  purchasePrice      Decimal?      @db.Decimal(10, 2)
-  warrantyExpiration DateTime?
-  fundingSource      String?
-  condition          Condition     @default(Good)
+  id                  String        @id @default(cuid())
+  assetTag            String        @unique
+  serialNumber        String        @unique
+  model               String
+  manufacturer        String
+  purchaseDate        DateTime?
+  purchasePrice       Decimal?      @db.Decimal(10, 2)
+  warrantyExpiration  DateTime?
+  fundingSource       String?
+  condition           Condition     @default(Good)
+  notes               String?
+  assignedToPerson    Json?         // { name, email, id }
+  secondaryTags       String[]
+  providedAccessories String[]
+  checkedOutAt        DateTime?
+  building            Building
+  roomId              String?
+  room                Room?         @relation(fields: [roomId], references: [id])
+  repairTickets       RepairTicket[]
+  events              AssetEvent[]
+  deletedAt           DateTime?
+  deletedBy           String?
+  deletedReason       String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+}
+
+model AssetEvent {
+  id                 String   @id @default(cuid())
+  assetId            String
+  asset              Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  eventType          String   // CheckOut | CheckIn | Enrolled
+  person             String?
+  accessories        String[]
+  missingAccessories String[]
+  performedBy        String?
   notes              String?
-  assignedToPerson   Json?         // { name, email, ou }
-  building           Building
-  roomId             String?
-  room               Room?         @relation(fields: [roomId], references: [id])
-  repairTickets      RepairTicket[]
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  createdAt          DateTime @default(now())
+
+  @@index([assetId, createdAt])
 }
 
 model RepairTicket {
@@ -92,8 +146,45 @@ model RepairTicket {
   repairCost       Decimal?     @db.Decimal(10, 2)
   timeSpentMinutes Int?
   csNumber         String?
+  photos           String[]
+  ticketParts      TicketPart[]
   createdAt        DateTime     @default(now())
   resolvedAt       DateTime?
+}
+
+model LookupValue {
+  id          String   @id @default(cuid())
+  category    String
+  value       String
+  parentValue String   @default("")
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@unique([category, value, parentValue])
+  @@index([category, parentValue])
+}
+
+model Part {
+  id                 String       @id @default(cuid())
+  name               String
+  partNumber         String?
+  compatManufacturer String?
+  compatModel        String?
+  quantityOnHand     Int          @default(0)
+  lowStockThreshold  Int          @default(2)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  ticketParts        TicketPart[]
+}
+
+model TicketPart {
+  id        String       @id @default(cuid())
+  ticketId  String
+  ticket    RepairTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  partId    String
+  part      Part         @relation(fields: [partId], references: [id])
+  quantity  Int          @default(1)
+  createdAt DateTime     @default(now())
 }
 
 // Auth.js required models

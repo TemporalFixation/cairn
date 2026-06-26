@@ -1,7 +1,7 @@
-version: '3.8'
 services:
   db:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: k12inventory
       POSTGRES_USER: k12user
@@ -16,23 +16,28 @@ services:
 
   app:
     build: .
+    restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://k12user:${DB_PASSWORD}@db:5432/k12inventory
       NEXTAUTH_URL: ${NEXTAUTH_URL}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      GOOGLE_ADMIN_SUBJECT: ${GOOGLE_ADMIN_SUBJECT}
-      GOOGLE_SERVICE_ACCOUNT_KEY: ${GOOGLE_SERVICE_ACCOUNT_KEY}
-      ALLOWED_GOOGLE_GROUP: ${ALLOWED_GOOGLE_GROUP}
+      AUTH_TRUST_HOST: "true"
+      GITHUB_REPO: ${GITHUB_REPO:-}
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
+      WEBHOOK_PORT: ${WEBHOOK_PORT:-9191}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy
 
   nginx:
     image: nginx:alpine
+    restart: unless-stopped
     ports:
-      - "80:80"
+      - "${PORT:-411}:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
@@ -40,3 +45,4 @@ services:
 
 volumes:
   pgdata:
+  uploads:

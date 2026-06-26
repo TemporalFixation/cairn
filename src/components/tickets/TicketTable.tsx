@@ -6,6 +6,7 @@ import type { TicketWithRelations } from '@/types'
 const STATUS_LABELS: Record<string, string> = {
   Open: 'Open',
   InProgress: 'In Progress',
+  WaitingForParts: 'Waiting for Parts',
   Resolved: 'Resolved',
   Closed: 'Closed',
 }
@@ -13,6 +14,7 @@ const STATUS_LABELS: Record<string, string> = {
 const statusColor: Record<string, string> = {
   Open: 'bg-red-100 text-red-800',
   InProgress: 'bg-yellow-100 text-yellow-800',
+  WaitingForParts: 'bg-purple-100 text-purple-800',
   Resolved: 'bg-green-100 text-green-800',
   Closed: 'bg-slate-100 text-slate-600',
 }

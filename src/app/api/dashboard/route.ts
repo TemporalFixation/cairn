@@ -7,10 +7,10 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const [totalAssets, openTickets, assetsByBuilding, recentAssets] = await Promise.all([
-    prisma.asset.count(),
+    prisma.asset.count({ where: { deletedAt: null } }),
     prisma.repairTicket.count({ where: { status: { in: ['Open', 'InProgress'] } } }),
-    prisma.asset.groupBy({ by: ['building'], _count: { id: true } }),
-    prisma.asset.findMany({ orderBy: { updatedAt: 'desc' }, take: 5, include: { room: true } }),
+    prisma.asset.groupBy({ by: ['building'], where: { deletedAt: null }, _count: { id: true } }),
+    prisma.asset.findMany({ where: { deletedAt: null }, orderBy: { updatedAt: 'desc' }, take: 5, include: { room: true } }),
   ])
 
   return NextResponse.json({

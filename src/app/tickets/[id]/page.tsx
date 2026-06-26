@@ -33,7 +33,7 @@ export default function TicketDetailPage() {
           View Asset ({ticket.asset.assetTag})
         </Link>
       </div>
-      <TicketForm assetId={ticket.assetId} onSave={handleSave} initialData={ticket} />
+      <TicketForm assetId={ticket.assetId} ticketId={id} onSave={handleSave} initialData={ticket} />
     </div>
   )
 }

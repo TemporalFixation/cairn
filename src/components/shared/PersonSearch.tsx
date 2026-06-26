@@ -37,11 +37,11 @@ export function PersonSearch({ label = 'Assign to Person', value, onSelect }: Pr
         onBlur={() => setTimeout(() => setOpen(false), 150)}
       />
       {open && results.length > 0 && (
-        <ul className="absolute z-10 w-full bg-white border rounded shadow-md max-h-48 overflow-y-auto">
+        <ul className="absolute z-10 w-full bg-card border rounded shadow-md max-h-48 overflow-y-auto">
           {results.map(p => (
             <li
               key={p.email}
-              className="px-3 py-2 hover:bg-slate-100 cursor-pointer text-sm"
+              className="px-3 py-2 hover:bg-secondary cursor-pointer text-sm"
               onMouseDown={() => { onSelect(p); setQuery(p.name); setOpen(false) }}
             >
               <span className="font-medium">{p.name}</span>{' '}

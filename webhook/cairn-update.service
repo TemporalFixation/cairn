@@ -1,0 +1,19 @@
+[Unit]
+Description=Cairn Update Webhook Server
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/cairn
+EnvironmentFile=/opt/cairn/.env
+ExecStart=/usr/bin/python3 /opt/cairn/webhook/cairn-update-server.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cairn-webhook
+
+[Install]
+WantedBy=multi-user.target
