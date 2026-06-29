@@ -14,11 +14,16 @@ export default function EditAssetPage() {
   }, [id])
 
   async function handleSave(data: any) {
-    await fetch(`/api/assets/${id}`, {
+    const res = await fetch(`/api/assets/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      alert(err.error ?? 'Save failed')
+      return
+    }
     router.push(`/assets/${id}`)
   }
 

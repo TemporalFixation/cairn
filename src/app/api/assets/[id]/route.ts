@@ -23,8 +23,13 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   const body = await req.json()
   const updateData: any = {}
   const allowedFields = ['assetTag', 'serialNumber', 'model', 'manufacturer', 'condition', 'building', 'roomId', 'assignedToPerson', 'purchaseDate', 'purchasePrice', 'warrantyExpiration', 'fundingSource', 'notes', 'providedAccessories', 'checkedOutAt', 'secondaryTags']
+  // Enum fields must be null (not empty string) when unset
+  const enumFields = ['building', 'condition']
   for (const field of allowedFields) {
-    if (field in body) updateData[field] = body[field] ?? null
+    if (field in body) {
+      const val = body[field]
+      updateData[field] = (val === '' || val === null || val === undefined) && enumFields.includes(field) ? null : (val ?? null)
+    }
   }
 
   const before = await prisma.asset.findUnique({ where: { id: params.id } })
