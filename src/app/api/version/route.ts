@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: NextRequest) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -24,7 +26,7 @@ export async function GET(req: NextRequest) {
     try {
       const res = await fetch(`https://api.github.com/repos/${githubRepo}/releases/latest`, {
         headers: { 'User-Agent': 'k12-inventory-app', Accept: 'application/vnd.github.v3+json' },
-        next: { revalidate: 3600 }, // cache 1h
+        cache: 'no-store',
       })
       if (res.ok) {
         const data = await res.json()
