@@ -24,19 +24,21 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   // Coerce empty string to null for nullable FK
   const assignedToId = body.assignedToId === '' ? null : (body.assignedToId ?? undefined)
 
+  const toFloat = (v: any) => v !== '' && v != null ? parseFloat(v) : null
+  const toInt = (v: any) => v !== '' && v != null ? parseInt(v) : null
+
   // Only allow client-updatable fields (strip Prisma-managed fields)
   const updateData: any = {}
   if (body.issueType !== undefined) updateData.issueType = body.issueType
   if (body.issueDescription !== undefined) updateData.issueDescription = body.issueDescription
   if (body.status !== undefined) updateData.status = body.status
-  if (body.partsUsed !== undefined) updateData.partsUsed = body.partsUsed
-  if (body.repairCost !== undefined) updateData.repairCost = body.repairCost ?? null
-  if (body.timeSpentMinutes !== undefined) updateData.timeSpentMinutes = body.timeSpentMinutes ?? null
+  if (body.partsUsed !== undefined) updateData.partsUsed = body.partsUsed || null
+  if (body.repairCost !== undefined) updateData.repairCost = toFloat(body.repairCost)
+  if (body.timeSpentMinutes !== undefined) updateData.timeSpentMinutes = toInt(body.timeSpentMinutes)
   if (body.csNumber !== undefined) updateData.csNumber = body.csNumber || null
   if (assignedToId !== undefined) updateData.assignedToId = assignedToId
 
   if (body.status === 'Resolved' || body.status === 'Closed') {
-    // First fetch current ticket to check if resolvedAt is already set
     const existing = await prisma.repairTicket.findUnique({
       where: { id: params.id },
       select: { resolvedAt: true }
@@ -46,6 +48,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
   }
 
-  const ticket = await prisma.repairTicket.update({ where: { id: params.id }, data: updateData, include })
-  return NextResponse.json({ ticket })
+  try {
+    const ticket = await prisma.repairTicket.update({ where: { id: params.id }, data: updateData, include })
+    return NextResponse.json({ ticket })
+  } catch (err: any) {
+    console.error('Ticket update error:', err)
+    return NextResponse.json({ error: err.message ?? 'Failed to update ticket' }, { status: 500 })
+  }
 }

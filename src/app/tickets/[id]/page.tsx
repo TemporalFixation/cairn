@@ -15,12 +15,18 @@ export default function TicketDetailPage() {
   }, [id])
 
   async function handleSave(data: any) {
-    await fetch(`/api/tickets/${id}`, {
+    const res = await fetch(`/api/tickets/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
-    router.refresh()
+    if (res.ok) {
+      const d = await res.json()
+      setTicket(d.ticket)
+    } else {
+      const err = await res.json().catch(() => ({}))
+      alert(`Failed to save ticket: ${err.error ?? res.statusText}`)
+    }
   }
 
   if (!ticket) return <p>Loading...</p>
