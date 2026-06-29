@@ -100,7 +100,6 @@ export function TicketForm({ assetId, ticketId, onSave, onCancel, initialData }:
     setLoading(true)
     await onSave({ ...form })
     setLoading(false)
-    if (onCancel) { onCancel() } else { router.push('/tickets') }
   }
 
   async function handleAddPart() {
