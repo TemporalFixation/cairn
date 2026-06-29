@@ -103,6 +103,17 @@
   .text-balance { text-wrap: balance; }
 }
 
+/* ── Native select theming ──────────────────────────────── */
+select {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  color-scheme: light dark;
+}
+
+.dark select {
+  color-scheme: dark;
+}
+
 /* ── Print / PDF styles ─────────────────────────────────── */
 @media print {
   body { background: white !important; color: #1a1a1a !important; font-size: 11px; }
