@@ -23,12 +23,12 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   const body = await req.json()
   const updateData: any = {}
   const allowedFields = ['assetTag', 'serialNumber', 'model', 'manufacturer', 'condition', 'building', 'roomId', 'assignedToPerson', 'purchaseDate', 'purchasePrice', 'warrantyExpiration', 'fundingSource', 'notes', 'providedAccessories', 'checkedOutAt', 'secondaryTags']
-  // Enum fields must be null (not empty string) when unset
-  const enumFields = ['building', 'condition']
+  // These fields must be null (not empty string) when unset — enums and foreign keys
+  const nullIfEmpty = ['building', 'condition', 'roomId', 'fundingSource']
   for (const field of allowedFields) {
     if (field in body) {
       const val = body[field]
-      updateData[field] = (val === '' || val === null || val === undefined) && enumFields.includes(field) ? null : (val ?? null)
+      updateData[field] = (val === '' || val === null || val === undefined) && nullIfEmpty.includes(field) ? null : (val ?? null)
     }
   }
 
