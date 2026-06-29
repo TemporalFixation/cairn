@@ -324,15 +324,10 @@ export function TicketForm({ assetId, ticketId, onSave, onCancel, initialData }:
             </div>
           )}
           <div>
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border rounded-md bg-card hover:bg-secondary transition-colors disabled:opacity-50"
-            >
+            <label className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border rounded-md bg-card hover:bg-secondary transition-colors cursor-pointer ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+              <input ref={fileRef} type="file" accept="image/*" className="sr-only" onChange={handlePhotoUpload} disabled={uploading} />
               {uploading ? 'Uploading…' : '+ Add Photo'}
-            </button>
+            </label>
           </div>
         </div>
       )}
