@@ -36,19 +36,27 @@ export async function POST(req: NextRequest) {
   const toStr = (v: string | null | undefined) => v && v !== '' ? v : null
   const toFloat = (v: any) => v !== '' && v != null ? parseFloat(v) : null
   const toInt = (v: any) => v !== '' && v != null ? parseInt(v) : null
-  const ticket = await prisma.repairTicket.create({
-    data: {
-      assetId,
-      issueType,
-      issueDescription,
-      submittedById: (session.user as any).id ?? session.user.id ?? null,
-      assignedToId: toStr(body.assignedToId),
-      partsUsed: toStr(body.partsUsed),
-      repairCost: toFloat(body.repairCost),
-      timeSpentMinutes: toInt(body.timeSpentMinutes),
-      csNumber: toStr(body.csNumber),
-    },
-    include,
-  })
-  return NextResponse.json({ ticket }, { status: 201 })
+  const submittedById = (session.user as any).id ?? session.user.id ?? null
+  console.log('ticket create — submittedById:', submittedById, 'session.user:', JSON.stringify(session.user))
+
+  try {
+    const ticket = await prisma.repairTicket.create({
+      data: {
+        assetId,
+        issueType,
+        issueDescription,
+        submittedById,
+        assignedToId: toStr(body.assignedToId),
+        partsUsed: toStr(body.partsUsed),
+        repairCost: toFloat(body.repairCost),
+        timeSpentMinutes: toInt(body.timeSpentMinutes),
+        csNumber: toStr(body.csNumber),
+      },
+      include,
+    })
+    return NextResponse.json({ ticket }, { status: 201 })
+  } catch (err: any) {
+    console.error('Ticket create error:', err)
+    return NextResponse.json({ error: err.message ?? 'Failed to create ticket' }, { status: 500 })
+  }
 }
