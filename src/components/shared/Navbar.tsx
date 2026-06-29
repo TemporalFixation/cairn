@@ -81,6 +81,7 @@ function AdminMenu() {
           <div className="border-t border-border" />
           <p className="px-3 pt-2 pb-1 text-xs font-mono tracking-widest text-muted-foreground uppercase">Tools</p>
           <DropdownLink href="/admin/retag">Replace Asset Tag</DropdownLink>
+          <a href="/api/admin/backup" download className="block px-3 py-2 text-sm hover:bg-secondary transition-colors">↓ Backup to CSV</a>
           <div className="border-t border-border" />
           <DropdownLink href="/admin/settings">App Settings</DropdownLink>
           <DropdownLink href="/admin/updates">Updates</DropdownLink>
