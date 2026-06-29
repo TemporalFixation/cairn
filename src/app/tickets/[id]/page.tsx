@@ -21,8 +21,7 @@ export default function TicketDetailPage() {
       body: JSON.stringify(data),
     })
     if (res.ok) {
-      const d = await res.json()
-      setTicket(d.ticket)
+      router.push('/tickets')
     } else {
       const err = await res.json().catch(() => ({}))
       alert(`Failed to save ticket: ${err.error ?? res.statusText}`)
