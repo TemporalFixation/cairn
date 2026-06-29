@@ -58,46 +58,51 @@ export async function POST(req: NextRequest) {
   const toFloat = (v: string | null | undefined) => v && v !== '' ? parseFloat(v) : null
   const toStr = (v: string | null | undefined) => v && v !== '' ? v : null
 
-  const asset = await prisma.asset.create({
-    data: {
-      serialNumber,
-      assetTag,
-      model,
-      manufacturer,
-      building,
-      condition: condition ?? 'Good',
-      roomId: toStr(data.roomId),
-      assignedToPerson: data.assignedToPerson ?? null,
-      purchaseDate: toDate(data.purchaseDate),
-      purchasePrice: toFloat(data.purchasePrice),
-      warrantyExpiration: toDate(data.warrantyExpiration),
-      fundingSource: toStr(data.fundingSource),
-      notes: toStr(data.notes),
-      providedAccessories: data.providedAccessories ?? [],
-    },
-  })
+  try {
+    const asset = await prisma.asset.create({
+      data: {
+        serialNumber,
+        assetTag,
+        model,
+        manufacturer,
+        building,
+        condition: condition ?? 'Good',
+        roomId: toStr(data.roomId),
+        assignedToPerson: data.assignedToPerson ?? null,
+        purchaseDate: toDate(data.purchaseDate),
+        purchasePrice: toFloat(data.purchasePrice),
+        warrantyExpiration: toDate(data.warrantyExpiration),
+        fundingSource: toStr(data.fundingSource),
+        notes: toStr(data.notes),
+        providedAccessories: data.providedAccessories ?? [],
+      },
+    })
 
-  // Auto-register manufacturer and model in lookup tables so dropdowns work
-  await prisma.lookupValue.upsert({
-    where: { category_value_parentValue: { category: 'manufacturer', value: manufacturer, parentValue: '' } },
-    update: {},
-    create: { category: 'manufacturer', value: manufacturer, parentValue: '' },
-  })
-  await prisma.lookupValue.upsert({
-    where: { category_value_parentValue: { category: 'model', value: model, parentValue: manufacturer } },
-    update: {},
-    create: { category: 'model', value: model, parentValue: manufacturer },
-  })
+    // Auto-register manufacturer and model in lookup tables so dropdowns work
+    await prisma.lookupValue.upsert({
+      where: { category_value_parentValue: { category: 'manufacturer', value: manufacturer, parentValue: '' } },
+      update: {},
+      create: { category: 'manufacturer', value: manufacturer, parentValue: '' },
+    })
+    await prisma.lookupValue.upsert({
+      where: { category_value_parentValue: { category: 'model', value: model, parentValue: manufacturer } },
+      update: {},
+      create: { category: 'model', value: model, parentValue: manufacturer },
+    })
 
-  const performedBy = session.user?.name ?? session.user?.email ?? 'Unknown'
-  await prisma.assetEvent.create({
-    data: {
-      assetId: asset.id,
-      eventType: 'Enrolled',
-      accessories: data.providedAccessories ?? [],
-      performedBy,
-    },
-  })
+    const performedBy = session.user?.name ?? session.user?.email ?? 'Unknown'
+    await prisma.assetEvent.create({
+      data: {
+        assetId: asset.id,
+        eventType: 'Enrolled',
+        accessories: data.providedAccessories ?? [],
+        performedBy,
+      },
+    })
 
-  return NextResponse.json({ asset }, { status: 201 })
+    return NextResponse.json({ asset }, { status: 201 })
+  } catch (err: any) {
+    console.error('Asset create error:', err)
+    return NextResponse.json({ error: err.message ?? 'Failed to create asset' }, { status: 500 })
+  }
 }

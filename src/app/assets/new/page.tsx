@@ -13,6 +13,9 @@ export default function NewAssetPage() {
     if (res.ok) {
       const { asset } = await res.json()
       router.push(`/assets/${asset.id}`)
+    } else {
+      const err = await res.json().catch(() => ({}))
+      alert(`Failed to create asset: ${err.error ?? res.statusText}`)
     }
   }
   return (
