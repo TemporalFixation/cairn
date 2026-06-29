@@ -77,6 +77,18 @@ export async function POST(req: NextRequest) {
     },
   })
 
+  // Auto-register manufacturer and model in lookup tables so dropdowns work
+  await prisma.lookupValue.upsert({
+    where: { category_value_parentValue: { category: 'manufacturer', value: manufacturer, parentValue: '' } },
+    update: {},
+    create: { category: 'manufacturer', value: manufacturer, parentValue: '' },
+  })
+  await prisma.lookupValue.upsert({
+    where: { category_value_parentValue: { category: 'model', value: model, parentValue: manufacturer } },
+    update: {},
+    create: { category: 'model', value: model, parentValue: manufacturer },
+  })
+
   const performedBy = session.user?.name ?? session.user?.email ?? 'Unknown'
   await prisma.assetEvent.create({
     data: {

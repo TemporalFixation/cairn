@@ -194,6 +194,9 @@ export default function UpdatesPage() {
         </div>
       </div>
 
+      {/* Maintenance tools */}
+      <BackfillLookupsButton />
+
       {/* Release workflow */}
       <div className="space-y-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Release Workflow</h2>
@@ -201,6 +204,41 @@ export default function UpdatesPage() {
           <p>New releases are published to GitHub with a version tag (<span className="font-mono">v1.2.3</span>). When you run <span className="font-mono">./update.sh</span>, the latest tag is pulled automatically.</p>
           <p className="mt-2">See the full changelog at <a href="https://github.com/TemporalFixation/cairn" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">github.com/TemporalFixation/cairn</a>.</p>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function BackfillLookupsButton() {
+  const [status, setStatus] = useState<string | null>(null)
+  const [running, setRunning] = useState(false)
+
+  async function run() {
+    setRunning(true)
+    setStatus(null)
+    const r = await fetch('/api/admin/backfill-lookups', { method: 'POST' })
+    const d = await r.json()
+    if (r.ok) setStatus(`Done — synced ${d.assets} assets, registered ${d.lookups} lookup entries.`)
+    else setStatus(`Error: ${d.error}`)
+    setRunning(false)
+  }
+
+  return (
+    <div className="space-y-2">
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Maintenance</h2>
+      <div className="rounded-lg border border-border p-5 space-y-3">
+        <div>
+          <p className="text-sm font-medium">Sync Manufacturer &amp; Model Lookups</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Registers all manufacturers and models from existing assets into the lookup tables. Run this once after a CSV import to fix dropdowns showing &quot;Other&quot;.</p>
+        </div>
+        <button
+          onClick={run}
+          disabled={running}
+          className="px-4 py-2 rounded-md text-sm font-semibold bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+        >
+          {running ? 'Running…' : 'Sync Lookups'}
+        </button>
+        {status && <p className="text-sm text-muted-foreground">{status}</p>}
       </div>
     </div>
   )
