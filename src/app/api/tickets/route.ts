@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       assetId,
       issueType,
       issueDescription,
-      submittedById: session.user.id,
+      submittedById: (session.user as any).id ?? session.user.id ?? null,
       assignedToId: toStr(body.assignedToId),
       partsUsed: toStr(body.partsUsed),
       repairCost: toFloat(body.repairCost),

@@ -43,6 +43,9 @@ export default function TicketsPage() {
       const { ticket } = await res.json()
       setShowAdd(false)
       router.push(`/tickets/${ticket.id}`)
+    } else {
+      const err = await res.json().catch(() => ({}))
+      alert(`Failed to create ticket: ${err.error ?? res.statusText}`)
     }
   }
 

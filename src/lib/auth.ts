@@ -57,10 +57,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (localUser && localUser.passwordHash) {
           if (!verifyPassword(password, localUser.passwordHash)) return null
           if (localUser.role === 'User') return null // regular users don't get app login
+          // Upsert an iTUser so submittedById on tickets always has a valid FK
+          const itUser = await prisma.iTUser.upsert({
+            where: { email: localUser.email ?? email },
+            update: { name: `${localUser.firstName} ${localUser.lastName}` },
+            create: { email: localUser.email ?? email, name: `${localUser.firstName} ${localUser.lastName}`, googleId: localUser.email ?? email, role: UserRole.Admin },
+          })
           return {
-            id: localUser.id,
-            email: localUser.email ?? email,
-            name: `${localUser.firstName} ${localUser.lastName}`,
+            id: itUser.id,
+            email: itUser.email,
+            name: itUser.name,
             role: localUser.role,
             passwordChangeRequired: localUser.passwordChangeRequired,
             isLocalUser: true,
