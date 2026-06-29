@@ -36,8 +36,24 @@ export async function POST(req: NextRequest) {
   const toStr = (v: string | null | undefined) => v && v !== '' ? v : null
   const toFloat = (v: any) => v !== '' && v != null ? parseFloat(v) : null
   const toInt = (v: any) => v !== '' && v != null ? parseInt(v) : null
-  const submittedById = (session.user as any).id ?? session.user.id ?? null
-  console.log('ticket create — submittedById:', submittedById, 'session.user:', JSON.stringify(session.user))
+  // Resolve to a valid iTUser id — session may carry a LocalUser id from old tokens
+  const sessionId = (session.user as any).id ?? session.user.id
+  const sessionEmail = session.user.email ?? ''
+  let submittedById: string | null = null
+  if (sessionId) {
+    const itUser = await prisma.iTUser.findUnique({ where: { id: sessionId } })
+    if (itUser) {
+      submittedById = itUser.id
+    }
+  }
+  if (!submittedById && sessionEmail) {
+    const itUser = await prisma.iTUser.upsert({
+      where: { email: sessionEmail },
+      update: {},
+      create: { email: sessionEmail, name: session.user.name ?? sessionEmail, googleId: sessionEmail, role: 'Admin' },
+    })
+    submittedById = itUser.id
+  }
 
   try {
     const ticket = await prisma.repairTicket.create({
