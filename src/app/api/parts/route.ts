@@ -8,10 +8,14 @@ export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
   const manufacturer = searchParams.get('manufacturer')
   const model = searchParams.get('model')
+  const all = searchParams.get('all')
 
-  const where: any = { OR: [{ compatManufacturer: null }] }
-  if (manufacturer) where.OR.push({ compatManufacturer: manufacturer, compatModel: null })
-  if (manufacturer && model) where.OR.push({ compatManufacturer: manufacturer, compatModel: model })
+  let where: any = {}
+  if (!all) {
+    where = { OR: [{ compatManufacturer: null }] }
+    if (manufacturer) where.OR.push({ compatManufacturer: manufacturer, compatModel: null })
+    if (manufacturer && model) where.OR.push({ compatManufacturer: manufacturer, compatModel: model })
+  }
 
   const parts = await prisma.part.findMany({ where, orderBy: { name: 'asc' } })
   return NextResponse.json({ parts })

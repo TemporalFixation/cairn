@@ -122,7 +122,7 @@ function PartsInventoryTab() {
   const set = (k: string) => (v: string) => setForm(f => ({ ...f, [k]: v }))
 
   const load = useCallback(() => {
-    fetch('/api/parts').then(r => r.json()).then(d => setParts(d.parts ?? []))
+    fetch('/api/parts?all=1').then(r => r.json()).then(d => setParts(d.parts ?? []))
   }, [])
   useEffect(() => { load() }, [load])
   useEffect(() => {
