@@ -173,6 +173,26 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ assets })
   }
 
+  if (type === 'accessory-reconcile') {
+    const counts = await prisma.accessoryCount.findMany({
+      orderBy: [{ building: 'asc' }, { accessoryType: 'asc' }],
+    })
+
+    // For each building+accessoryType, count assets that have it in providedAccessories
+    const rows = await Promise.all(counts.map(async c => {
+      const onRecord = await prisma.asset.count({
+        where: {
+          building: c.building,
+          providedAccessories: { has: c.accessoryType },
+          deletedAt: null,
+        },
+      })
+      return { ...c, onRecord }
+    }))
+
+    return NextResponse.json({ rows })
+  }
+
   if (type === 'meta') {
     const [manufacturers, models, assets] = await Promise.all([
       prisma.lookupValue.findMany({ where: { category: 'manufacturer', parentValue: '' }, orderBy: { value: 'asc' } }),

@@ -39,6 +39,7 @@ export async function Navbar() {
         <NavLink href="/tickets">Tickets</NavLink>
         <NavLink href="/reports">Reports</NavLink>
         <NavLink href="/kiosk">Kiosk</NavLink>
+        <NavLink href="/accessories">Accessories</NavLink>
         {isAdmin && <AdminMenu />}
       </div>
 

@@ -15,6 +15,7 @@ const REPORT_TYPES = [
   { key: 'ticket-summary',       label: 'Ticket Summary',              icon: '🎫' },
   { key: 'reconcile',            label: 'Reconciliation — Unseen Devices', icon: '🔍' },
   { key: 'deleted-assets',       label: 'Deleted Assets',              icon: '🗑️' },
+  { key: 'accessory-reconcile',  label: 'Accessory Reconcile',         icon: '🎒' },
 ]
 
 export default function ReportsPage() {
@@ -192,7 +193,7 @@ function ReportParams({ type, params, meta, onChange }: { type: string; params: 
         value={params.building || '__all__'}
         onValueChange={v => onChange('building', v === '__all__' ? '' : v)}
       >
-        <SelectTrigger><SelectValue>{params.building || 'All buildings'}</SelectValue></SelectTrigger>
+        <SelectTrigger><SelectValue placeholder="All buildings" /></SelectTrigger>
         <SelectContent>
           <SelectItem value="__all__">All buildings</SelectItem>
           {meta.buildings.length === 0 && <SelectItem value="__none__" disabled>No buildings found — add assets first</SelectItem>}
@@ -200,6 +201,10 @@ function ReportParams({ type, params, meta, onChange }: { type: string; params: 
         </SelectContent>
       </Select>
     </div>
+  )
+
+  if (type === 'accessory-reconcile') return (
+    <p className="text-sm text-muted-foreground">No parameters needed — shows current accessory counts vs. assets on record per building.</p>
   )
 
   if (type === 'reconcile') return (
@@ -551,6 +556,63 @@ function ReportOutput({ type, data, params }: { type: string; data: any; params:
           </tbody>
         </table>
       </ReportSection>
+    )
+  }
+
+  if (type === 'accessory-reconcile') {
+    const rows: any[] = data.rows ?? []
+    if (!rows.length) return <Empty message="No accessory data found. Add accessories via the Accessories page first." />
+    const buildings = [...new Set(rows.map((r: any) => r.building))] as string[]
+    return (
+      <div className="space-y-8">
+        {buildings.map(building => {
+          const buildingRows = rows.filter((r: any) => r.building === building)
+          const totalMissing = buildingRows.reduce((s: number, r: any) => s + Math.max(0, r.initialCount - (r.reconciledCount ?? r.initialCount)), 0)
+          return (
+            <div key={building} className="print-break-before">
+              <div className="flex items-baseline justify-between mb-3 pb-1 border-b-2" style={{ borderColor: 'var(--district-red)' }}>
+                <h3 className="text-base font-semibold">{building}</h3>
+                {totalMissing > 0 && (
+                  <span className="text-sm font-mono font-semibold" style={{ color: 'var(--district-red)' }}>{totalMissing} missing</span>
+                )}
+              </div>
+              <div className="rounded-md border overflow-hidden">
+                <table className="report-table w-full">
+                  <thead>
+                    <tr>
+                      <Th>Accessory</Th>
+                      <Th align="right">On Record (Assets)</Th>
+                      <Th align="right">Initial Count</Th>
+                      <Th align="right">Reconciled</Th>
+                      <Th align="right">Missing</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {buildingRows.map((r: any, i: number) => {
+                      const missing = r.reconciledCount !== null ? r.initialCount - r.reconciledCount : null
+                      return (
+                        <tr key={`${r.building}-${r.accessoryType}`} className={i % 2 === 0 ? 'bg-secondary/30' : ''}>
+                          <Td>{r.accessoryType}</Td>
+                          <Td align="right" mono>{r.onRecord}</Td>
+                          <Td align="right" mono>{r.initialCount}</Td>
+                          <Td align="right" mono>{r.reconciledCount ?? '—'}</Td>
+                          <Td align="right">
+                            {missing === null ? <span className="text-muted-foreground font-mono">—</span> : (
+                              <span className="font-mono font-semibold" style={{ color: missing > 0 ? 'var(--district-red)' : '#0F7D5A' }}>
+                                {missing > 0 ? `-${missing}` : missing < 0 ? `+${Math.abs(missing)}` : '0'}
+                              </span>
+                            )}
+                          </Td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )
+        })}
+      </div>
     )
   }
 
