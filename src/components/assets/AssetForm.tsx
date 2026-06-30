@@ -57,7 +57,11 @@ export function AssetForm({ asset, onSave, onCancel }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    await onSave({ ...form, assignedToPerson: person ?? null, secondaryTags })
+    // Flush any tag still sitting in the input field
+    const finalTags = newTag.trim() && !secondaryTags.includes(newTag.trim())
+      ? [...secondaryTags, newTag.trim()]
+      : secondaryTags
+    await onSave({ ...form, assignedToPerson: person ?? null, secondaryTags: finalTags })
     setLoading(false)
   }
 
