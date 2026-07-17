@@ -6,7 +6,7 @@ import { Building, Condition } from '@prisma/client'
 
 type AssetRow = {
   asset_tag: string; serial_number: string; model: string; manufacturer: string
-  building: string; condition?: string; purchase_date?: string; purchase_price?: string
+  building: string; room?: string; condition?: string; purchase_date?: string; purchase_price?: string
   warranty_expiration?: string; funding_source?: string; notes?: string
 }
 
@@ -22,6 +22,23 @@ export async function POST(req: NextRequest) {
   const { data, errors } = parseCsv<AssetRow>(text)
   const validBuildings = Object.values(Building) as string[]
   const validConditions = Object.values(Condition) as string[]
+
+  // Cache room lookups to avoid redundant DB queries
+  const roomCache = new Map<string, string>()
+
+  async function resolveRoomId(building: Building, roomName: string): Promise<string | null> {
+    if (!roomName?.trim()) return null
+    const key = `${building}::${roomName.trim()}`
+    if (roomCache.has(key)) return roomCache.get(key)!
+    const room = await prisma.room.upsert({
+      where: { name_building: { name: roomName.trim(), building } },
+      update: {},
+      create: { building, name: roomName.trim() },
+    })
+    roomCache.set(key, room.id)
+    return room.id
+  }
+
   let created = 0, updated = 0
 
   for (const row of data) {
@@ -30,9 +47,11 @@ export async function POST(req: NextRequest) {
       continue
     }
     const condition = (validConditions.includes(row.condition ?? '') ? row.condition : 'Good') as Condition
+    const roomId = await resolveRoomId(row.building as Building, row.room ?? '')
     const assetData = {
       assetTag: row.asset_tag, model: row.model, manufacturer: row.manufacturer,
       building: row.building as Building, condition,
+      roomId,
       purchaseDate: row.purchase_date ? new Date(row.purchase_date) : null,
       purchasePrice: row.purchase_price ? parseFloat(row.purchase_price) : null,
       warrantyExpiration: row.warranty_expiration ? new Date(row.warranty_expiration) : null,
