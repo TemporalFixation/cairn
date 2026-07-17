@@ -59,24 +59,37 @@ export async function POST(req: NextRequest) {
   const toStr = (v: string | null | undefined) => v && v !== '' ? v : null
 
   try {
-    const asset = await prisma.asset.create({
-      data: {
-        serialNumber,
-        assetTag,
-        model,
-        manufacturer,
-        building,
-        condition: condition ?? 'Good',
-        roomId: toStr(data.roomId),
-        assignedToPerson: data.assignedToPerson ?? null,
-        purchaseDate: toDate(data.purchaseDate),
-        purchasePrice: toFloat(data.purchasePrice),
-        warrantyExpiration: toDate(data.warrantyExpiration),
-        fundingSource: toStr(data.fundingSource),
-        notes: toStr(data.notes),
-        providedAccessories: data.providedAccessories ?? [],
+    // If a soft-deleted record exists with this asset tag or serial number, restore it instead
+    const deleted = await prisma.asset.findFirst({
+      where: {
+        OR: [{ assetTag }, { serialNumber }],
+        deletedAt: { not: null },
       },
     })
+
+    const assetData = {
+      serialNumber,
+      assetTag,
+      model,
+      manufacturer,
+      building,
+      condition: condition ?? 'Good',
+      roomId: toStr(data.roomId),
+      assignedToPerson: data.assignedToPerson ?? null,
+      purchaseDate: toDate(data.purchaseDate),
+      purchasePrice: toFloat(data.purchasePrice),
+      warrantyExpiration: toDate(data.warrantyExpiration),
+      fundingSource: toStr(data.fundingSource),
+      notes: toStr(data.notes),
+      providedAccessories: data.providedAccessories ?? [],
+      deletedAt: null,
+      deletedBy: null,
+      deletedReason: null,
+    }
+
+    const asset = deleted
+      ? await prisma.asset.update({ where: { id: deleted.id }, data: assetData })
+      : await prisma.asset.create({ data: assetData })
 
     // Auto-register manufacturer and model in lookup tables so dropdowns work
     await prisma.lookupValue.upsert({
