@@ -33,7 +33,18 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 
   const before = await prisma.asset.findUnique({ where: { id: params.id } })
-  const asset = await prisma.asset.update({ where: { id: params.id }, data: updateData })
+
+  let asset
+  try {
+    asset = await prisma.asset.update({ where: { id: params.id }, data: updateData })
+  } catch (err: any) {
+    if (err.code === 'P2002') {
+      const field = err.meta?.target?.[0] ?? 'field'
+      return NextResponse.json({ error: `That ${field === 'serialNumber' ? 'serial number' : field === 'assetTag' ? 'asset tag' : field} is already in use by another asset.` }, { status: 409 })
+    }
+    console.error('Asset update error:', err)
+    return NextResponse.json({ error: err.message ?? 'Failed to save asset' }, { status: 500 })
+  }
 
   const performedBy = session.user?.name ?? session.user?.email ?? 'Unknown'
 
