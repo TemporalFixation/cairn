@@ -38,6 +38,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   if (updateData.warrantyExpiration != null) updateData.warrantyExpiration = new Date(updateData.warrantyExpiration)
   if (updateData.checkedOutAt != null) updateData.checkedOutAt = new Date(updateData.checkedOutAt)
 
+  console.log('[asset PUT] updateData.purchasePrice:', updateData.purchasePrice, typeof updateData.purchasePrice)
+
   const before = await prisma.asset.findUnique({ where: { id: params.id } })
 
   let asset
