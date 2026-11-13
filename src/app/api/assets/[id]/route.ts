@@ -32,8 +32,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
   }
 
-  // Prisma rejects raw strings for Decimal and DateTime fields
-  if (updateData.purchasePrice != null) updateData.purchasePrice = parseFloat(updateData.purchasePrice)
+  // Prisma pg adapter requires Decimal as string, DateTime as Date object
+  if (updateData.purchasePrice != null) updateData.purchasePrice = String(updateData.purchasePrice)
   if (updateData.purchaseDate != null) updateData.purchaseDate = new Date(updateData.purchaseDate)
   if (updateData.warrantyExpiration != null) updateData.warrantyExpiration = new Date(updateData.warrantyExpiration)
   if (updateData.checkedOutAt != null) updateData.checkedOutAt = new Date(updateData.checkedOutAt)
